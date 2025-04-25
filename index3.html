@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutoria Digital</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #9dc9f7;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: #e4e9f1;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #343a40;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .signature-pad {
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            width: 100%;
+            height: 200px;
+            cursor: crosshair;
+        }
+
+        button {
+            margin-top: 10px;
+        }
+
+        .tutoria-list {
+            margin-top: 30px;
+        }
+
+        .tutoria-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .student-info {
+            display: flex;
+            gap: 10px;
+        }
+
+        .small-input {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tutoria Digital</h1>
+        <form id="tutoriaForm">
+            <div class="form-group">
+                <label for="nomeFuncionario">TUTOR</label>
+                <input type="text" class="form-control" id="nomeTutor" required>
+            </div>
+
+            <!-- Nome do aluno e série juntos -->
+            <div class="student-info">
+                <div class="form-group">
+                    <label for="nomeAluno">Nome do Aluno</label>
+                    <input type="text" class="form-control" id="nomeAluno" required>
+                </div>
+                <div class="form-group small-input">
+                    <label for="serie">Série</label>
+                    <input type="text" class="form-control" id="serie">
+                </div>
+            </div>
+
+            <!-- Removido nome do pai, mãe e endereço -->
+
+            <!-- Telefone e celular com opção de adicionar mais números -->
+            <div class="form-group">
+                <label for="telefoneCelular">Telefone e Celular</label>
+                <div id="telefoneContainer">
+                    <div class="input-group mb-2">
+                        <input type="text" class="form-control" id="telefoneCelular" placeholder="(XX) XXXX-XXXX / (XX) XXXXX-XXXX">
+                        <div class="input-group-append">
+                            <button class="btn btn-success" type="button" onclick="adicionarNumero()">Adicionar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mantido projeto de vida -->
+            <div class="form-group">
+                <label for="projetoVida">Projeto de Vida</label>
+                <textarea class="form-control" id="projetoVida" rows="3"></textarea>
+            </div>
+
+            <!-- Checkbox group mantido -->
+            <div class="checkbox-group">
+                <div>
+                    <input type="checkbox" id="checkPessoal">
+                    <label for="checkPessoal">Pessoal</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="checkPedagogico">
+                    <label for="checkPedagogico">Pedagógico</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="checkFamilia">
+                    <label for="checkFamilia">Família</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="checkEmergencia">
+                    <label for="checkEmergencia">Emergência</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="checkProvaPaulista">
+                    <label for="checkProvaPaulista">Prova Paulista</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="checkNotasBimestrais">
+                    <label for="checkNotasBimestrais">Notas Bimestrais</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="checkComportamento">
+                    <label for="checkComportamento">Comportamento</label>
+                </div>
+            </div>
+
+            <!-- Assunto pessoal -->
+            <div class="form-group">
+                <label for="assuntoPessoal">Descrição do Assunto</label>
+                <textarea class="form-control" id="assuntoPessoal" rows="3"></textarea>
+            </div>
+
+            <!-- Mantido resto do formulário -->
+            <div class="form-group">
+                <label for="carimboGestor">Carimbo do Prof (1234)</label>
+                <input type="password" class="form-control" id="senhaGestor" placeholder="Digite a senha">
+                <input type="text" class="form-control" id="carimboGestor" disabled>
+            </div>
+            <div class="form-group">
+                <label>Data e Hora</label>
+                <p id="dataHora"></p>
+            </div>
+            <div class="form-group">
+                <label>Assinatura Digital do Aluno</label>
+                <canvas id="signaturePadAluno" class="signature-pad"></canvas>
+                <button type="button" class="btn btn-secondary mt-2" id="clearSignatureAluno">Limpar Assinatura do Aluno</button>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="saveTutoria()">Salvar Tutoria</button>
+            <button type="button" class="btn btn-warning" onclick="clearForm()">Limpar Formulário</button>
+            <button type="button" class="btn btn-info" onclick="sendWhatsApp()">Enviar Relatório por WhatsApp</button>
+        </form>
+
+        <div class="tutoria-list">
+            <h2>Lista de Tutorias</h2>
+            <div id="tutoriaList"></div>
+        </div>
+
+        <button type="button" class="btn btn-danger" onclick="deleteSelected()">Deletar Selecionados</button>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.13/jspdf.plugin.autotable.min.js"></script>
+    <script>
+        function salvarTutoria() {
+            const form = document.getElementById('tutoriaForm');
+            const formData = new FormData(form);
+
+            fetch('http://localhost:3000/salvarTutoria', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => alert('Tutoria salva com sucesso!'))
+            .catch(error => alert('Erro ao salvar tutoria: ' + error));
+        }
+
+        function clearForm() {
+            document.getElementById('tutoriaForm').reset();
+        }
+    </script>
+    <script>
+        function adicionarNumero() {
+            const container = document.getElementById('telefoneContainer');
+            const inputGroup = document.createElement('div');
+            inputGroup.className = 'input-group mb-2';
+            inputGroup.innerHTML = `
+                <input type="text" class="form-control" placeholder="(XX) XXXX-XXXX / (XX) XXXXX-XXXX">
+                <div class="input-group-append">
+                    <button class="btn btn-danger" type="button" onclick="removerNumero(this)">Remover</button>
+                </div>
+            `;
+            container.appendChild(inputGroup);
+        }
+
+        function removerNumero(button) {
+            button.closest('.input-group').remove();
+        }
+
+        // Exibir data e hora atual
+        function updateDataHora() {
+            const now = new Date();
+            const dataHora = now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR');
+            document.getElementById('dataHora').innerText = dataHora;
+        }
+
+        setInterval(updateDataHora, 1000);
+
+        // Funções para a assinatura digital
+        const canvasAluno = document.getElementById('signaturePadAluno');
+        const ctxAluno = canvasAluno.getContext('2d');
+        let drawingAluno = false;
+
+        function getMousePos(event, canvas) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: event.clientX - rect.left,
+                y: event.clientY - rect.top
+            };
+        }
+
+        function getTouchPos(event, canvas) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: event.touches[0].clientX - rect.left,
+                y: event.touches[0].clientY - rect.top
+            };
+        }
+
+        function startPosition(event, ctx, canvas, drawing) {
+            drawing = true;
+            draw(event, ctx, canvas, drawing);
+        }
+
+        function endPosition(ctx) {
+            drawingAluno = false;
+            ctx.beginPath();
+        }
+
+        function draw(event, ctx, canvas, drawing) {
+            if (!drawing) return;
+
+            event.preventDefault(); // Evitar comportamentos padrão, como rolagem na touch screen
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = 'black';
+
+            let pos;
+
+            if (event.type.includes('mouse')) {
+                pos = getMousePos(event, canvas);
+            } else if (event.type.includes('touch')) {
+                pos = getTouchPos(event, canvas);
+            }
+
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+        }
+
+        // Eventos para mouse e touch - Aluno
+        canvasAluno.addEventListener('mousedown', (e) => startPosition(e, ctxAluno, canvasAluno, drawingAluno = true));
+        canvasAluno.addEventListener('mouseup', () => endPosition(ctxAluno));
+        canvasAluno.addEventListener('mousemove', (e) => draw(e, ctxAluno, canvasAluno, drawingAluno));
+
+        canvasAluno.addEventListener('touchstart', (e) => startPosition(e, ctxAluno, canvasAluno, drawingAluno = true));
+        canvasAluno.addEventListener('touchend', () => endPosition(ctxAluno));
+        canvasAluno.addEventListener('touchmove', (e) => draw(e, ctxAluno, canvasAluno, drawingAluno));
+
+        document.getElementById('clearSignatureAluno').addEventListener('click', () => {
+            ctxAluno.clearRect(0, 0, canvasAluno.width, canvasAluno.height);
+        });
+
+        // Verificar se a senha do gestor está correta para desbloquear o campo de carimbo e assinatura
+        document.getElementById('senhaGestor').addEventListener('input', function() {
+            const senha = this.value;
+            if (senha === "1234") {
+                document.getElementById('carimboGestor').disabled = false;
+            } else {
+                document.getElementById('carimboGestor').disabled = true;
+            }
+        });
+
+        // Função para salvar uma tutoria
+        function saveTutoria() {
+             
+            const nomeAluno = document.getElementById('nomeAluno').value;
+            const serie = document.getElementById('serie').value;
+            const nomeCompleto = `${nomeAluno} (${serie})`;
+
+            const tutoriaData = {
+                nomeTutor: document.getElementById('nomeTutor').value, // ADICIONADO
+                nomeAluno: nomeCompleto,
+                telefoneCelular: document.getElementById('telefoneCelular').value,
+                serie: serie,
+                projetoVida: document.getElementById('projetoVida').value,
+                assuntoPessoal: document.getElementById('assuntoPessoal').value,
+                checkPessoal: document.getElementById('checkPessoal').checked,
+                checkPedagogico: document.getElementById('checkPedagogico').checked,
+                checkFamilia: document.getElementById('checkFamilia').checked,
+                checkEmergencia: document.getElementById('checkEmergencia').checked,
+                checkProvaPaulista: document.getElementById('checkProvaPaulista').checked,
+                checkNotasBimestrais: document.getElementById('checkNotasBimestrais').checked,
+                checkComportamento: document.getElementById('checkComportamento').checked,
+                carimboGestor: document.getElementById('carimboGestor').value,
+                dataHora: document.getElementById('dataHora').innerText,
+                assinaturaAluno: canvasAluno.toDataURL()
+            };
+
+            let tutorias = JSON.parse(localStorage.getItem('tutorias')) || [];
+            tutorias.push(tutoriaData);
+            localStorage.setItem('tutorias', JSON.stringify(tutorias));
+
+            renderTutoriaList();
+            clearForm();
+        }
+
+        // Função para limpar o formulário
+        function clearForm() {
+            document.getElementById('tutoriaForm').reset();
+            ctxAluno.clearRect(0, 0, canvasAluno.width, canvasAluno.height);
+        }
+
+        // Função para renderizar a lista de tutorias
+        function renderTutoriaList() {
+            const tutoriaList = document.getElementById('tutoriaList');
+            tutoriaList.innerHTML = '';
+
+            let tutorias = JSON.parse(localStorage.getItem('tutorias')) || [];
+
+            tutorias.forEach((tutoria, index) => {
+                const tutoriaItem = document.createElement('div');
+                tutoriaItem.className = 'tutoria-item';
+
+                const tutoriaInfo = document.createElement('div');
+                tutoriaInfo.innerHTML = `<input type="checkbox" data-index="${index}"> <strong>${tutoria.nomeAluno}</strong> - ${tutoria.dataHora}`;
+
+                const btnGroup = document.createElement('div');
+                btnGroup.className = 'btn-group';
+
+                const btnSavePDF = document.createElement('button');
+                btnSavePDF.className = 'btn btn-sm btn-success';
+                btnSavePDF.innerText = 'Salvar em PDF';
+                btnSavePDF.onclick = () => saveAsPDF(index);
+
+                const btnLoad = document.createElement('button');
+                btnLoad.className = 'btn btn-sm btn-primary';
+                btnLoad.innerText = 'Carregar';
+                btnLoad.onclick = () => loadTutoria(index);
+
+                btnGroup.appendChild(btnSavePDF);
+                btnGroup.appendChild(btnLoad);
+
+                tutoriaItem.appendChild(tutoriaInfo);
+                tutoriaItem.appendChild(btnGroup);
+
+                tutoriaList.appendChild(tutoriaItem);
+            });
+        }
+
+        // Função para deletar as tutorias selecionadas
+        function deleteSelected() {
+            let tutorias = JSON.parse(localStorage.getItem('tutorias')) || [];
+            const checkboxes = document.querySelectorAll('.tutoria-item input[type="checkbox"]:checked');
+
+            checkboxes.forEach(checkbox => {
+                const index = checkbox.getAttribute('data-index');
+                tutorias.splice(index, 1);
+            });
+
+            localStorage.setItem('tutorias', JSON.stringify(tutorias));
+            renderTutoriaList();
+        }
+
+        // Função para carregar uma tutoria para edição
+        function loadTutoria(index) {
+            let tutorias = JSON.parse(localStorage.getItem('tutorias')) || [];
+            const tutoria = tutorias[index];
+            document.getElementById('nomeTutor').value = tutoria.nomeTutor || ''; 
+            document.getElementById('nomeAluno').value = tutoria.nomeAluno;
+            document.getElementById('telefoneCelular').value = tutoria.telefoneCelular;
+            document.getElementById('serie').value = tutoria.serie;
+            document.getElementById('projetoVida').value = tutoria.projetoVida;
+            document.getElementById('assuntoPessoal').value = tutoria.assuntoPessoal;
+            document.getElementById('checkPessoal').checked = tutoria.checkPessoal;
+            document.getElementById('checkPedagogico').checked = tutoria.checkPedagogico;
+            document.getElementById('checkFamilia').checked = tutoria.checkFamilia;
+            document.getElementById('checkEmergencia').checked = tutoria.checkEmergencia;
+            document.getElementById('checkProvaPaulista').checked = tutoria.checkProvaPaulista;
+            document.getElementById('checkNotasBimestrais').checked = tutoria.checkNotasBimestrais;
+            document.getElementById('checkComportamento').checked = tutoria.checkComportamento;
+            document.getElementById('carimboGestor').value = tutoria.carimboGestor;
+            document.getElementById('dataHora').innerText = tutoria.dataHora;
+
+            const imgAluno = new Image();
+            imgAluno.src = tutoria.assinaturaAluno;
+            imgAluno.onload = function () {
+                ctxAluno.clearRect(0, 0, canvasAluno.width, canvasAluno.height);
+                ctxAluno.drawImage(imgAluno, 0, 0);
+            };
+        }
+
+        // Função para salvar uma tutoria como PDF
+        function saveAsPDF(index) {
+            let tutorias = JSON.parse(localStorage.getItem('tutorias')) || [];
+            const tutoria = tutorias[index];
+
+            const pdf = new jspdf.jsPDF();
+            pdf.text(`Tutoria de ${tutoria.nomeAluno}`, 10, 10);
+
+            // Cria a estrutura da "planilha"
+            const columns = ["Campo", "Informação"];
+            const rows = [
+                ["Tutor", tutoria.nomeTutor], // ADICIONADO
+                ["Telefone/Celular", tutoria.telefoneCelular],
+                ["Série", tutoria.serie],
+                ["Projeto de Vida", tutoria.projetoVida],
+                ["Assunto Pessoal", tutoria.assuntoPessoal],
+                ["Check Pessoal", tutoria.checkPessoal ? 'Sim' : 'Não'],
+                ["Check Pedagógico", tutoria.checkPedagogico ? 'Sim' : 'Não'],
+                ["Check Família", tutoria.checkFamilia ? 'Sim' : 'Não'],
+                ["Check Emergência", tutoria.checkEmergencia ? 'Sim' : 'Não'],
+                ["Check Prova Paulista", tutoria.checkProvaPaulista ? 'Sim' : 'Não'],
+                ["Check Notas Bimestrais", tutoria.checkNotasBimestrais ? 'Sim' : 'Não'],
+                ["Check Comportamento", tutoria.checkComportamento ? 'Sim' : 'Não'],
+                ["Carimbo do Gestor", tutoria.carimboGestor],
+                ["Data e Hora", tutoria.dataHora]
+            ];
+
+            pdf.autoTable(columns, rows, { startY: 20 });
+
+            // Ajusta a posição da assinatura do aluno
+            const imgAluno = new Image();
+            imgAluno.src = tutoria.assinaturaAluno;
+            imgAluno.onload = function () {
+                pdf.addImage(imgAluno, 'PNG', 10, pdf.autoTable.previous.finalY + 10, 180, 40);
+                pdf.save(`Tutoria_${tutoria.nomeAluno}.pdf`);
+            };
+        }
+
+        // Função para enviar o link para o WhatsApp
+        function sendWhatsApp() {
+            const numero = '14996002310'; // Insira o número do destinatário aqui
+            const mensagem = 'Aqui está o relatório de tutoria. Por favor, anexe o arquivo PDF manualmente.';
+            const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`;
+            window.open(url, '_blank');
+        }
+
+        // Inicializar a lista de tutorias
+        renderTutoriaList();
+    </script>
+</body>
+</html>

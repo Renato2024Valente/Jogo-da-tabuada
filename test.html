@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutoria Digital</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #b6cfe9;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: #e4e9f1;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #343a40;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .signature-pad {
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            width: 100%;
+            height: 200px;
+            cursor: crosshair;
+        }
+
+        button {
+            margin-top: 10px;
+        }
+
+        .tutoria-list {
+            margin-top: 30px;
+        }
+
+        .tutoria-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .student-info {
+            display: flex;
+            gap: 10px;
+        }
+
+        .small-input {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tutoria Digital</h1>
+        <form id="tutoriaForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="nomeFuncionario">TUTOR</label>
+                <select class="form-control" id="nomeFuncionario">
+                    <option value="">Selecione...</option>
+                    <option value="ALAN JUNIOR BUENO">ALAN JUNIOR BUENO</option>
+                    <option value="ALEX HENRIQUE GONÇALVES">ALEX HENRIQUE GONÇALVES</option>
+                    <option value="ALINE DAL PONTE SABBAG">ALINE DAL PONTE SABBAG</option>
+                    <option value="ALINE PRISCILA GARCIA DA SILVA">ALINE PRISCILA GARCIA DA SILVA</option>
+                    <option value="ANDREIA DE FATIMA GOMES PIEMONTE">ANDREIA DE FATIMA GOMES PIEMONTE</option>
+                    <option value="ANTONIO JOSÉ DO SANTOS JUNIOR">ANTONIO JOSÉ DO SANTOS JUNIOR</option>
+                    <option value="CARLOS ALBERTO CAVALLINI">CARLOS ALBERTO CAVALLINI</option>
+                    <option value="CARLOS VINICIUS PAES DALAZOANA">CARLOS VINICIUS PAES DALAZOANA</option>
+                    <option value="CRISTINA BALDINOTI">CRISTINA BALDINOTI</option>
+                    <option value="DAIANE DA SILVA SANTOS">DAIANE DA SILVA SANTOS</option>
+                    <option value="DARLENE MALDONADO DOS SANTOS">DARLENE MALDONADO DOS SANTOS</option>
+                    <option value="EDCARLOS DOS SANTOS">EDCARLOS DOS SANTOS</option>
+                    <option value="EDINEIA APARECIDA DE SOUZA">EDINEIA APARECIDA DE SOUZA</option>
+                    <option value="ELIANE ANDREA DIOMEDES">ELIANE ANDREA DIOMEDES</option>
+                    <option value="ELIZA GILIOLLI DOS SANTOS">ELIZA GILIOLLI DOS SANTOS</option>
+                    <option value="ERICA GOMES DE SÁ">ERICA GOMES DE SÁ</option>
+                    <option value="ERIVALDO SANTOS SILVA">ERIVALDO SANTOS SILVA</option>
+                    <option value="FELIPE BEIRO DE ALMEIDA">FELIPE BEIRO DE ALMEIDA</option>
+                    <option value="FLAVIO HENRIQUE CHAVES FILHO">FLAVIO HENRIQUE CHAVES FILHO</option>
+                    <option value="GRAZIELLE CHRISTINE MARANGONI SCARMANHÃ">GRAZIELLE CHRISTINE MARANGONI SCARMANHÃ</option>
+                    <option value="GRAZIELLE DE OLIVEIRA SANTOS">GRAZIELLE DE OLIVEIRA SANTOS</option>
+                    <option value="ITALO BERTONCINI">ITALO BERTONCINI</option>
+                    <option value="IZAÍAS NOGUEIRA RODRIGUES">IZAÍAS NOGUEIRA RODRIGUES</option>
+                    <option value="JANAINA TOGNON">JANAINA TOGNON</option>
+                    <option value="JAQUELINE PADERES SCORSAFAVA GARCIA">JAQUELINE PADERES SCORSAFAVA GARCIA</option>
+                    <option value="JONAS RANGEL DE ALMEIDA">JONAS RANGEL DE ALMEIDA</option>
+                    <option value="JOSELILIAN LOPES MIRALHA">JOSELILIAN LOPES MIRALHA</option>
+                    <option value="JOSIANI KELY MILESK">JOSIANI KELY MILESK</option>
+                    <option value="KAREN REGINA TAN GALINA">KAREN REGINA TAN GALINA</option>
+                    <option value="KARINA CÁSSIA OLIVEIRA REIS">KARINA CÁSSIA OLIVEIRA REIS</option>
+                    <option value="LEANDRO HENRIQUE DE SOUZA BEZERRA">LEANDRO HENRIQUE DE SOUZA BEZERRA</option>
+                    <option value="LURDES DOS SANTOS ELIAS LIMA">LURDES DOS SANTOS ELIAS LIMA</option>
+                    <option value="MAGDA APARECIDA DE OLIVEIRA PRADO">MAGDA APARECIDA DE OLIVEIRA PRADO</option>
+                    <option value="MARCIO ENRIQUE STANCKEVIZ">MARCIO ENRIQUE STANCKEVIZ</option>
+                    <option value="MARIANA SAKER DE CASTRO PAIVA">MARIANA SAKER DE CASTRO PAIVA</option>
+                    <option value="MARIUDA AFFONSO ALVES VAZ">MARIUDA AFFONSO ALVES VAZ</option>
+                    <option value="MATHEUS AUGUSTO SILVA">MATHEUS AUGUSTO SILVA</option>
+                    <option value="MILCE FERREIRA DE MOURA">MILCE FERREIRA DE MOURA</option>
+                    <option value="MIRIAM BEIRO DE ALMEIDA">MIRIAM BEIRO DE ALMEIDA</option>
+                    <option value="NATHÁLIA VERONESE MARTINS">NATHÁLIA VERONESE MARTINS</option>
+                    <option value="RAFAEL MARTINS DOS SANTOS">RAFAEL MARTINS DOS SANTOS</option>
+                    <option value="RENATO DAVID VALENTE">RENATO DAVID VALENTE</option>
+                    <option value="ROGERIO DOS SANTOS FERREIRA">ROGERIO DOS SANTOS FERREIRA</option>
+                    <option value="ROSA LOPES PONTES">ROSA LOPES PONTES</option>
+                    <option value="ROSANA LORAINE ARAUJO DE S. ZAMPIERI">ROSANA LORAINE ARAUJO DE S. ZAMPIERI</option>
+                    <option value="SAVIA BETHANIA CAVALCANTI">SAVIA BETHANIA CAVALCANTI</option>
+                    <option value="SILENE BERTASSI">SILENE BERTASSI</option>
+                    <option value="SILVIA REGINA FERREIRA BALLAS">SILVIA REGINA FERREIRA BALLAS</option>
+                    <option value="SILVIA VALENTIM DAMACENO">SILVIA VALENTIM DAMACENO</option>
+                    <option value="SONIA MARIA NABAS DOS SANTOS">SONIA MARIA NABAS DOS SANTOS</option>
+                    <option value="SUELI BATISTETTI VICENTE">SUELI BATISTETTI VICENTE</option>
+                    <option value="SÉRGIO DE OLIVEIRA RODRIGUES">SÉRGIO DE OLIVEIRA RODRIGUES</option>
+                    <!-- Liste os outros tutores aqui -->
+                </select>
+            </div>
+
+            <div class="student-info">
+                <div class="form-group">
+                    <label for="nomeAluno">Nome do Aluno</label>
+                    <input type="text" class="form-control" id="nomeAluno" required>
+                </div>
+                <div class="form-group small-input">
+                    <label for="serie">Série</label>
+                    <input type="text" class="form-control" id="serie">
+                </div>
+            </div>
+
+            <!-- Campo para adicionar arquivos -->
+            <div class="form-group">
+                <label for="arquivos">Arquivos</label>
+                <input type="file" id="arquivos" name="arquivos" class="form-control" multiple>
+            </div>
+
+            <!-- Outras partes do formulário (telefone, assunto, etc.) -->
+
+            <button type="button" class="btn btn-primary" onclick="salvarTutoria()">Salvar Tutoria</button>
+            <button type="button" class="btn btn-warning" onclick="clearForm()">Limpar Formulário</button>
+        </form>
+
+    </div>
+
+    <script>
+        // Função para salvar a tutoria no backend
+        function salvarTutoria() {
+            const form = document.getElementById('tutoriaForm');
+            const formData = new FormData(form);  // Pega os dados do formulário, incluindo os arquivos
+
+            fetch('http://localhost:3000/salvarTutoria', {
+                method: 'POST',
+                body: formData  // Envia os dados como FormData
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Tutoria salva com sucesso!');
+                console.log(data);  // Pode exibir a resposta do backend
+            })
+            .catch(error => alert('Erro ao salvar tutoria: ' + error));
+        }
+
+        // Função para limpar o formulário
+        function clearForm() {
+            document.getElementById('tutoriaForm').reset();  // Limpa o formulário
+        }
+    </script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
