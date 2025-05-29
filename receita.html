@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Receitas do Chef Renato</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet" />
+    <link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" />
+    <style>
+    body {
+      background-color: #000814;
+      color: white;
+    }
+
+    #fotos img {
+      width: 100%;
+      height: 250px;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+
+    @keyframes neonAzul {
+      0%, 100% {
+        text-shadow:
+          0 0 5px rgb(0, 255, 255),
+          0 0 10px rgb(0, 255, 255),
+          0 0 20px rgb(0, 255, 255),
+          0 0 40px rgb(0, 255, 255);
+      }
+      50% {
+        text-shadow:
+          0 0 2px rgb(0, 128, 128),
+          0 0 5px rgb(0, 255, 255),
+          0 0 10px rgb(0, 255, 255),
+          0 0 20px rgb(0, 255, 255);
+      }
+    }
+
+    .neon {
+      color: rgb(0, 255, 255);
+      animation: neonAzul 1.8s ease-in-out infinite;
+    }
+
+    @keyframes neonRosa {
+      0%, 100% {
+        text-shadow:
+          0 0 5px rgb(255, 0, 255),
+          0 0 10px rgb(255, 0, 255),
+          0 0 20px rgb(255, 0, 255),
+          0 0 40px rgb(255, 0, 255);
+      }
+      50% {
+        text-shadow:
+          0 0 2px rgb(128, 0, 128),
+          0 0 5px rgb(200, 0, 200),
+          0 0 10px rgb(255, 0, 255),
+          0 0 20px rgb(255, 0, 255);
+      }
+    }
+
+    .neon-title {
+      color: rgb(255, 0, 255);
+      animation: neonRosa 1.8s ease-in-out infinite;
+    }
+
+    a.youtube-link {
+      color: #00ffff;
+      text-decoration: none;
+    }
+
+    a.youtube-link:hover {
+      color: #ff00ff;
+      text-decoration: underline;
+    }
+  </style>
+  </head>
+
+  <body>
+
+    <!-- ✅ Navbar Bootstrap -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container">
+        <a class="navbar-brand neon" href="#"><i
+            class="bi bi-person-circle"></i> Chef Renato</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+          data-bs-target="#menuNav"
+          aria-controls="menuNav" aria-expanded="false"
+          aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="menuNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link active" href="index.html"><i
+                  class="bi bi-house-door-fill"></i> Início</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#receita"><i
+                  class="bi bi-journal-text"></i> Receita</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#videos"><i
+                  class="bi bi-camera-video-fill"></i> Vídeos</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ✅ Conteúdo -->
+    <section id="fotos" class="mt-5">
+      <h2 class="mb-4 text-center neon-title"><i class="bi bi-image-fill"></i>
+        Apresentação</h2>
+      <div class="row">
+        <div class="col-md-4 mb-4">
+         <a href="https://www.youtube.com/watch?v=P-_YQwR04CQ"
+              target="_blank">🍫 Receita de Pão Caseiro</a></li>
+          <img src="pão.jfif" class="img-fluid rounded shadow" alt="Foto 1" />
+        </div>
+        <div class="col-md-4 mb-4">
+           <a href="https://www.youtube.com/shorts/3i6tFD97Xpc"
+              target="_blank">🎂 Como fazer Bolo de Chocolate</a></li>
+          <img src="pudim.jfif" class="img-fluid rounded shadow" alt="Foto 2" />
+        </div>
+        <div class="col-md-4 mb-4">
+          <a href="https://www.youtube.com/shorts/U4SK7Kx5P-k"
+              target="_blank">🔥  Como fazer Pudim</a></li>
+          <img src="bolo.jfif" class="img-fluid rounded shadow" alt="Foto 3" />
+        </div>
+      </div>
+    </section>
+    <main class="container mt-5">
+      <section id="inicio">
+        <h2 class="neon-title"><i class="bi bi-stars"></i> Bem-vindo ao Livro de
+          Receitas</h2>
+        <p>Aprenda receitas incríveis com estilo neon!</p>
+      </section>
+
+      <section id="receita" class="mt-5">
+        <h2 class="neon-title"><i class="bi bi-egg-fried"></i> Receita: Bolo de
+          Chocolate</h2>
+        <p><strong>Ingredientes:</strong></p>
+        <ul>
+          <li>3 ovos</li>
+          <li>2 xícaras de farinha de trigo</li>
+          <li>1 xícara de açúcar</li>
+          <li>1 xícara de leite</li>
+          <li>1 xícara de chocolate em pó</li>
+          <li>1 colher (sopa) de fermento</li>
+        </ul>
+        <p><strong>Modo de Preparo:</strong></p>
+        <ol>
+          <li>Misture os ingredientes secos.</li>
+          <li>Adicione os ovos e o leite aos poucos.</li>
+          <li>Bata até a massa ficar homogênea.</li>
+          <li>Leve ao forno a 180°C por 35 minutos.</li>
+        </ol>
+      </section>
+
+      <section id="videos" class="mt-5">
+        <h2 class="neon-title"><i class="bi bi-youtube"></i> Vídeos no
+          YouTube</h2>
+        <p>Confira essas receitas em vídeo:</p>
+        <ul>
+          <li><a class="youtube-link"
+              href="https://www.youtube.com/watch?v=P-_YQwR04CQ"
+              target="_blank">🍫 Receita de Pão Caseiro</a></li>
+          <li><a class="youtube-link"
+              href="https://www.youtube.com/shorts/3i6tFD97Xpc"
+              target="_blank">🎂 Como fazer Bolo de Chocolate</a></li>
+          <li><a class="youtube-link"
+              href="https://www.youtube.com/shorts/U4SK7Kx5P-k"
+              target="_blank">🔥  Como fazer Pudim</a></li>
+        </ul>
+      </section>
+    </main>
+
+    <!-- ✅ Rodapé -->
+    <footer class="bg-dark text-white text-center p-3 mt-5 neon">
+      <i class="bi bi-c-circle"></i> 2025 - Receitas com Neon. Todos os direitos
+      reservados.
+    </footer>
+
+    <!-- ✅ Scripts -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  </body>
+</html>
