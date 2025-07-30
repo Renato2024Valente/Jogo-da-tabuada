@@ -98,6 +98,22 @@ def teste_mongo():
         return jsonify({"status": "ok", "mensagem": "Conectado com sucesso ao MongoDB Atlas"})
     except Exception as e:
         return jsonify({"status": "erro", "mensagem": str(e)})
+@app.route("/api/buscativa", methods=["GET", "POST"])
+def buscativa():
+    print("⚙️ Iniciando rota /api/buscativa")
+    if request.method == "POST":
+        dados = request.json
+        dados["dataRegistro"] = datetime.now()
+        colecao_buscativa.insert_one(dados)
+        print("✅ Dados salvos")
+        return jsonify({"status": "success"})
+    else:
+        print("🔎 Tentando buscar dados no Mongo")
+        registros = list(colecao_buscativa.find().sort("dataRegistro", -1))
+        print("✅ Dados recuperados:", len(registros))
+        for r in registros:
+            r["_id"] = str(r["_id"])
+        return jsonify(registros)
 
 # Porta para Render
 if __name__ == "__main__":
