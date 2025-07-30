@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Sistema Escolar - Login de Acesso</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      color: #003366;
+      margin-bottom: 30px;
+    }
+    .login-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .login-container button {
+      background-color: #003366;
+      color: white;
+      padding: 15px 30px;
+      border-radius: 8px;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .login-container button:hover {
+      background-color: #0055a5;
+    }
+  </style>
+</head>
+<body>
+  <h1>📘 Acesso ao Sistema Escolar</h1>
+  <div class="login-container">
+    <button onclick="acessarFrequencia()">👨‍🏫 Entrar como Bedel (Frequência)</button>
+    <button onclick="acessarBuscativa()">👩‍🏫 Entrar como Professor (Buscativa)</button>
+  </div>
+
+  <script>
+    function acessarFrequencia() {
+      const senha = prompt("Digite a senha para Bedel:");
+      if (senha === "bedel123") {
+        window.location.href = "/frequencia";
+      } else {
+        alert("❌ Senha incorreta!");
+      }
+    }
+
+    function acessarBuscativa() {
+      const senha = prompt("Digite a senha para Professor:");
+      if (senha === "prof123") {
+        window.location.href = "/buscativa";
+      } else {
+        alert("❌ Senha incorreta!");
+      }
+    }
+  </script>
+</body>
+</html>

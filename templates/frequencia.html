@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang='pt-BR'>
+<head>
+  <meta charset='UTF-8'>
+  <title>Registro de Frequência</title>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <link href='https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css' rel='stylesheet'>
+</head>
+<body style='background-color: #eef5ff; padding: 20px;'>
+<div class='container bg-white p-4 rounded shadow'>
+  <h3 class='text-success mb-4'>✅ Registro de Frequência</h3>
+  <form id='formFreq' class='mb-4'>
+    <div class='form-row'>
+      <div class='form-group col-md-4'><label>Aluno:</label><input type='text' class='form-control' name='aluno' required></div>
+      <div class='form-group col-md-2'><label>Série:</label><input type='text' class='form-control' name='serie' required></div>
+      <div class='form-group col-md-2'><label>Presenças:</label><input type='number' class='form-control' name='presencas' required></div>
+      <div class='form-group col-md-2'><label>Total de Aulas:</label><input type='number' class='form-control' name='aulas' required></div>
+      <div class='form-group col-md-2 d-flex align-items-end'><button type='submit' class='btn btn-primary w-100'>Registrar</button></div>
+    </div>
+  </form>
+  <div id='resposta' class='mb-3'></div>
+  <h5>📋 Registros Recentes</h5>
+  <div class='form-check mb-2'>
+    <input class='form-check-input' type='checkbox' id='checkTodos' onchange='selecionarTodos(this)'>
+    <label class='form-check-label' for='checkTodos'>Selecionar todos</label>
+  </div>
+  <div class='table-responsive'>
+    <table class='table table-bordered table-sm'>
+      <thead class='thead-dark'>
+        <tr><th></th><th>Aluno</th><th>Série</th><th>Presenças</th><th>Aulas</th><th>Frequência (%)</th><th>Data</th></tr>
+      </thead>
+      <tbody id='tabelaRegistros'></tbody>
+    </table>
+  </div>
+  <button class='btn btn-warning btn-sm' onclick='removerDaTela()'>🚫 Limpar Selecionados da Tela</button>
+</div>
+<script>
+document.getElementById("formFreq").addEventListener("submit", async function(e){
+  e.preventDefault();
+  const form = e.target;
+  const dados = {
+    aluno: form.aluno.value,
+    serie: form.serie.value,
+    presencas: form.presencas.value,
+    aulas: form.aulas.value
+  };
+  const res = await fetch("/api/frequencia", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(dados)
+  });
+  const json = await res.json();
+  document.getElementById("resposta").innerHTML =
+    json.frequencia < 80 
+      ? `<div class="alert alert-danger">⚠️ Frequência baixa: ${json.frequencia}% - Buscativa acionada</div>` 
+      : `<div class="alert alert-success">✅ Frequência registrada: ${json.frequencia}%</div>`;
+  form.reset();
+  carregarRegistros();
+});
+async function carregarRegistros() {
+  const res = await fetch("/api/frequencia-listar");
+  const lista = await res.json();
+  const tbody = document.getElementById("tabelaRegistros");
+  tbody.innerHTML = "";
+  lista.forEach(item => {
+    const linha = document.createElement("tr");
+    linha.innerHTML = `
+      <td><input type="checkbox" class="check-linha"></td>
+      <td>${item.aluno}</td>
+      <td>${item.serie}</td>
+      <td>${item.presencas}</td>
+      <td>${item.aulas}</td>
+      <td>${item.frequencia}%</td>
+      <td>${new Date(item.dataRegistro).toLocaleString('pt-BR')}</td>`;
+    tbody.appendChild(linha);
+  });
+}
+function selecionarTodos(checkbox) {
+  document.querySelectorAll(".check-linha").forEach(cb => cb.checked = checkbox.checked);
+}
+function removerDaTela() {
+  document.querySelectorAll(".check-linha:checked").forEach(cb => cb.closest("tr").remove());
+}
+window.onload = carregarRegistros;
+</script>
+</body></html>

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Buscativa Escolar</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #eef5ff; padding: 20px; }
+    .alerta-falta {
+      background-color: #ffdddd;
+      border-left: 5px solid red;
+      padding: 10px;
+      margin-bottom: 15px;
+    }
+    .container {
+      background-color: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 0 10px #ccc;
+    }
+    .relatorio { margin-top: 30px; }
+    @media print {
+      body * { visibility: hidden; }
+      #relatorioFinal, #relatorioFinal * { visibility: visible; }
+      #relatorioFinal {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 class="text-center mb-4">Registro de Buscativa Escolar</h2>
+
+    <div class="alerta-falta">
+      <div id="alertaFrequencia" class="alert alert-warning p-3 mb-3" style="display: none;">
+        <strong>⚠️ Aluno(s) com frequência abaixo de 80%:</strong>
+        <ul id="listaAlunosAusentes" class="mb-0" style="list-style: none;"></ul>
+        <div id="areaChecagem" class="text-right mt-2" style="display: none;">
+          <button class="btn btn-sm btn-outline-danger" onclick="limparAlertas()">✅ Marcar como resolvido</button>
+        </div>
+      </div>
+    </div>
+
+    <form id="buscativaForm">
+      <div class="form-group"><label>Nome do Aluno:</label><input type="text" class="form-control" name="aluno" required></div>
+      <div class="form-group"><label>Série:</label><input type="text" class="form-control" name="serie" required></div>
+      <div class="form-group"><label>Data da Falta:</label><input type="date" class="form-control" name="dataFalta" required></div>
+      <div class="form-group">
+        <label>Tipo de Contato:</label>
+        <select class="form-control" name="tipoContato" required>
+          <option>Telefone</option><option>WhatsApp</option><option>Visita Domiciliar</option><option>Email</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Responsável:</label><input type="text" class="form-control" name="responsavel" required></div>
+      <div class="form-group"><label>Resultado do Contato:</label><textarea class="form-control" name="resultado" required></textarea></div>
+      <div class="form-group"><label>Observações:</label><textarea class="form-control" name="observacoes"></textarea></div>
+      <button type="submit" class="btn btn-primary btn-block">Salvar Buscativa</button>
+    </form>
+
+    <div class="relatorio" id="relatorioFinal" style="display:none;">
+      <h4 class="text-success mt-4">📄 Relatório Registrado</h4>
+      <pre id="resumoDados" class="bg-light p-3 border rounded"></pre>
+      <div class="text-center mt-3">
+        <button class="btn btn-success" onclick="window.print()">🖨️ Imprimir / Salvar em PDF</button>
+      </div>
+    </div>
+
+    <hr>
+    <div id="acessoRegistros">
+      <h4 class="mt-4">🔐 Acesso aos Registros</h4>
+      <div class="form-group"><input type="password" id="senhaAcesso" class="form-control" placeholder="Digite a senha de acesso"></div>
+      <button class="btn btn-secondary btn-block" onclick="verRegistros()">🔍 Ver Buscativas Registradas</button>
+    </div>
+
+    <div id="registrosTabela" style="display:none; margin-top: 20px;">
+      <h5 class="mt-4">📋 Lista de Buscativas</h5>
+      <div class="form-group">
+        <input type="text" class="form-control" id="filtroBusca" placeholder="🔍 Buscar por nome ou série..." onkeyup="filtrarTabela()">
+      </div>
+      <div class="table-responsive">
+        <table class="table table-bordered table-sm" id="tabelaCompleta">
+          <thead class="thead-dark">
+            <tr><th>Aluno</th><th>Série</th><th>Data</th><th>Contato</th><th>Responsável</th><th>Resultado</th><th>Ações</th></tr>
+          </thead>
+          <tbody id="tabelaDados"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <script>
+    document.getElementById("buscativaForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const form = e.target;
+      const dados = {
+        aluno: form.aluno.value,
+        serie: form.serie.value,
+        dataFalta: form.dataFalta.value,
+        tipoContato: form.tipoContato.value,
+        responsavel: form.responsavel.value,
+        resultado: form.resultado.value,
+        observacoes: form.observacoes.value
+      };
+
+      const res = await fetch("/api/buscativa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dados)
+      });
+
+      const resultado = await res.json();
+      if (resultado.status === "success") {
+        const relatorio = `
+Aluno: ${dados.aluno}
+Série: ${dados.serie}
+Data da Falta: ${dados.dataFalta}
+Tipo de Contato: ${dados.tipoContato}
+Responsável: ${dados.responsavel}
+Resultado: ${dados.resultado}
+Observações: ${dados.observacoes}
+        `.trim();
+        document.getElementById("resumoDados").textContent = relatorio;
+        document.getElementById("relatorioFinal").style.display = "block";
+        form.reset();
+      } else {
+        alert("Erro ao salvar buscativa.");
+      }
+    });
+
+    async function verRegistros() {
+      const senha = document.getElementById("senhaAcesso").value;
+      if (senha !== "1234") {
+        alert("❌ Senha incorreta!");
+        return;
+      }
+
+      const resposta = await fetch("/api/buscativa");
+      const dados = await resposta.json();
+
+      const tbody = document.getElementById("tabelaDados");
+      tbody.innerHTML = "";
+
+      dados.forEach(item => {
+        const relatorioTexto = `
+Aluno: ${item.aluno}
+Série: ${item.serie}
+Data da Falta: ${item.dataFalta}
+Tipo de Contato: ${item.tipoContato}
+Responsável: ${item.responsavel}
+Resultado: ${item.resultado}
+Observações: ${item.observacoes || ""}
+        `.trim().replace(/\n/g, '\\n');
+
+        const linha = `<tr>
+          <td>${item.aluno}</td>
+          <td>${item.serie}</td>
+          <td>${item.dataFalta}</td>
+          <td>${item.tipoContato}</td>
+          <td>${item.responsavel}</td>
+          <td>${item.resultado}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary" data-conteudo="${relatorioTexto}" onclick="imprimirTexto(this)">🖨️</button>
+            <button class="btn btn-sm btn-outline-success" data-conteudo="${relatorioTexto}" data-nome="${item.aluno}" onclick="baixarPDF(this)">💾</button>
+          </td>
+        </tr>`;
+        tbody.innerHTML += linha;
+      });
+
+      document.getElementById("registrosTabela").style.display = "block";
+    }
+
+    function imprimirTexto(botao) {
+      const texto = botao.getAttribute('data-conteudo').replace(/\\n/g, '\n');
+      const novaJanela = window.open('', '', 'width=800,height=600');
+      novaJanela.document.write('<pre>' + texto + '</pre>');
+      novaJanela.document.close();
+      novaJanela.focus();
+      novaJanela.print();
+    }
+
+    async function baixarPDF(botao) {
+      const conteudo = botao.getAttribute('data-conteudo').replace(/\\n/g, '\n');
+      const nome = botao.getAttribute('data-nome') || 'buscativa';
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      doc.setFontSize(14);
+      doc.text("Registro de Buscativa Escolar", 105, 15, null, null, "center");
+
+      const linhas = conteudo.split('\\n');
+      let y = 30;
+      doc.setFontSize(12);
+      linhas.forEach(linha => {
+        doc.text(linha.trim(), 15, y);
+        y += 10;
+      });
+
+      y += 15;
+      doc.line(15, y, 100, y);
+      doc.text("Assinatura do Responsável", 15, y + 5);
+      doc.setFontSize(10);
+      const dataAtual = new Date().toLocaleDateString('pt-BR');
+      doc.text(`Escola Monsenhor Bicudo - Marília/SP`, 15, y + 20);
+      doc.text(`Contato: (14) 3402-9999  •  Emissão: ${dataAtual}`, 15, y + 26);
+      doc.save(`Buscativa_${nome}.pdf`);
+    }
+
+    function filtrarTabela() {
+      const filtro = document.getElementById("filtroBusca").value.toLowerCase();
+      const linhas = document.querySelectorAll("#tabelaDados tr");
+      linhas.forEach(tr => {
+        const texto = tr.textContent.toLowerCase();
+        tr.style.display = texto.includes(filtro) ? "" : "none";
+      });
+    }
+
+    let originalTitle = document.title;
+    let alertaAtivo = false;
+    let intervaloPiscando;
+
+    async function carregarAlunosAusentes() {
+      const res = await fetch("/api/buscativa");
+      const lista = await res.json();
+
+      const alertaDiv = document.getElementById("alertaFrequencia");
+      const listaUl = document.getElementById("listaAlunosAusentes");
+      const areaChecagem = document.getElementById("areaChecagem");
+      listaUl.innerHTML = "";
+
+      const alunosCriticos = lista.filter(item =>
+        item.resultado?.includes("Frequência abaixo") &&
+        item.responsavel === "Sistema Frequência"
+      );
+
+      if (alunosCriticos.length > 0) {
+        alertaDiv.style.display = "block";
+        areaChecagem.style.display = "block";
+
+        alunosCriticos.forEach(item => {
+          const li = document.createElement("li");
+          li.innerHTML = `<span style="color:darkred;">🟥 ${item.aluno} - ${item.resultado}</span>`;
+          listaUl.appendChild(li);
+        });
+
+        if (!alertaAtivo) {
+          alertaAtivo = true;
+          let estado = false;
+          intervaloPiscando = setInterval(() => {
+            document.title = estado ? "🟥 Aluno com ausência!" : originalTitle;
+            estado = !estado;
+          }, 800);
+        }
+      } else {
+        alertaDiv.style.display = "none";
+        areaChecagem.style.display = "none";
+        clearInterval(intervaloPiscando);
+        document.title = originalTitle;
+        alertaAtivo = false;
+      }
+    }
+
+    async function limparAlertas() {
+      const res = await fetch("/api/limpar-alertas", { method: "DELETE" });
+      const json = await res.json();
+      alert(json.message || "✅ Alertas removidos!");
+      carregarAlunosAusentes();
+    }
+
+    setInterval(carregarAlunosAusentes, 15000);
+    carregarAlunosAusentes();
+  </script>
+</body>
+</html>
