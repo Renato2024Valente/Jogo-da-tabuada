@@ -1,80 +1,307 @@
 <!DOCTYPE html>
-<html lang='pt-BR'>
+<html lang="pt-BR">
 <head>
-  <meta charset='UTF-8'>
-  <title>Registro de Frequência</title>
-  <meta name='viewport' content='width=device-width, initial-scale=1'>
-  <link href='https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css' rel='stylesheet'>
+  <meta charset="UTF-8">
+  <title>Registro de Faltas (Semanal) — 100% Pronto</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .aluno-card { border:1px solid #e5e5e5; border-radius:8px; padding:12px; margin-bottom:10px; background:#f9fbff; }
+    .remover-btn { cursor:pointer; }
+    .table-danger td, .table-danger th { background-color:#f8d7da !important; }
+  </style>
 </head>
-<body style='background-color: #eef5ff; padding: 20px;'>
-<div class='container bg-white p-4 rounded shadow'>
-  <h3 class='text-success mb-4'>✅ Registro de Frequência</h3>
-  <form id='formFreq' class='mb-4'>
-    <div class='form-row'>
-      <div class='form-group col-md-4'><label>Aluno:</label><input type='text' class='form-control' name='aluno' required></div>
-      <div class='form-group col-md-2'><label>Série:</label><input type='text' class='form-control' name='serie' required></div>
-      <div class='form-group col-md-2'><label>Presenças:</label><input type='number' class='form-control' name='presencas' required></div>
-      <div class='form-group col-md-2'><label>Total de Aulas:</label><input type='number' class='form-control' name='aulas' required></div>
-      <div class='form-group col-md-2 d-flex align-items-end'><button type='submit' class='btn btn-primary w-100'>Registrar</button></div>
+<body style="background-color:#eef5ff; padding:20px;">
+<div class="container bg-white p-4 rounded shadow">
+  <h3 class="mb-1">🗓️ Registro de Faltas (Semanal)</h3>
+  <p class="text-muted">Marque os <strong>dias em que o aluno faltou</strong> (Seg–Sex) ou ative <strong>Sem faltas (100%)</strong>.</p>
+
+  <!-- FORM LOTE -->
+  <form id="formFreq" class="mb-3">
+    <div id="listaAlunos"></div>
+
+    <div class="d-flex align-items-center mb-3">
+      <button type="button" id="btnAdd" class="btn btn-outline-primary mr-2">+ Adicionar aluno</button>
+      <button type="button" id="btn100Todos" class="btn btn-outline-success mr-2">✔️ Marcar 100% para todos</button>
+      <button type="button" id="btnReg100Todos" class="btn btn-success mr-2">✅ Registrar 100% (todos)</button>
+      <button type="submit" class="btn btn-primary">Registrar Semana (todos)</button>
     </div>
+    <small class="text-muted">Presenças = <code>5 - faltas</code>. “Sem faltas (100%)” força faltas=0. O botão <strong>Registrar 100% (todos)</strong> ignora os checkboxes e envia 5/5.</small>
   </form>
-  <div id='resposta' class='mb-3'></div>
-  <h5>📋 Registros Recentes</h5>
-  <div class='form-check mb-2'>
-    <input class='form-check-input' type='checkbox' id='checkTodos' onchange='selecionarTodos(this)'>
-    <label class='form-check-label' for='checkTodos'>Selecionar todos</label>
+
+  <div id="resposta" class="mb-4"></div>
+
+  <div class="d-flex align-items-center justify-content-between">
+    <h5 class="mb-2">📋 Registros</h5>
+    <div class="custom-control custom-switch">
+      <input type="checkbox" class="custom-control-input" id="switchAcumulado" onchange="carregarRegistros()">
+      <label class="custom-control-label" for="switchAcumulado">Somar faltas/frequência por aluno (acumulado)</label>
+    </div>
   </div>
-  <div class='table-responsive'>
-    <table class='table table-bordered table-sm'>
-      <thead class='thead-dark'>
-        <tr><th></th><th>Aluno</th><th>Série</th><th>Presenças</th><th>Aulas</th><th>Frequência (%)</th><th>Data</th></tr>
+
+  <div class="form-check mb-2">
+    <input class="form-check-input" type="checkbox" id="checkTodos" onchange="selecionarTodos(this)">
+    <label class="form-check-label" for="checkTodos">Selecionar todos</label>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-sm">
+      <thead class="thead-dark">
+        <tr>
+          <th></th>
+          <th>Aluno</th>
+          <th>Série</th>
+          <th>Faltas (n/5 ou acumuladas)</th>
+          <th>Presenças</th>
+          <th>Frequência (%)</th>
+          <th>Data (último no acumulado)</th>
+        </tr>
       </thead>
-      <tbody id='tabelaRegistros'></tbody>
+      <tbody id="tabelaRegistros"></tbody>
     </table>
   </div>
-  <button class='btn btn-warning btn-sm' onclick='removerDaTela()'>🚫 Limpar Selecionados da Tela</button>
+
+  <button class="btn btn-warning btn-sm" onclick="removerDaTela()">🚫 Limpar Selecionados da Tela</button>
 </div>
+
 <script>
+const DIAS = [
+  {id:"seg", label:"Seg", v:"Segunda"},
+  {id:"ter", label:"Ter", v:"Terça"},
+  {id:"qua", label:"Qua", v:"Quarta"},
+  {id:"qui", label:"Qui", v:"Quinta"},
+  {id:"sex", label:"Sex", v:"Sexta"}
+];
+
+const listaAlunosDiv = document.getElementById("listaAlunos");
+document.getElementById("btnAdd").addEventListener("click", addLinhaAluno);
+document.getElementById("btn100Todos").addEventListener("click", marcar100ParaTodos);
+document.getElementById("btnReg100Todos").addEventListener("click", registrar100Todos);
+
+// cria uma linha de aluno
+function addLinhaAluno(defaults = {}) {
+  const idx = document.querySelectorAll(".aluno-card").length + 1;
+  const wrap = document.createElement("div");
+  wrap.className = "aluno-card";
+
+  wrap.innerHTML = `
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <strong>Aluno ${idx}</strong>
+      <button type="button" class="btn btn-sm btn-outline-danger remover-btn">Remover</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group col-md-5">
+        <label>Aluno</label>
+        <input type="text" class="form-control aluno-nome" required value="${defaults.aluno || ''}">
+      </div>
+      <div class="form-group col-md-3">
+        <label>Série</label>
+        <input type="text" class="form-control aluno-serie" required value="${defaults.serie || ''}">
+      </div>
+      <div class="form-group col-md-4">
+        <label>Dias de falta na semana</label>
+        <div class="d-flex flex-wrap">
+          ${DIAS.map(d => `
+          <div class="form-check mr-2">
+            <input class="form-check-input dia-falta" type="checkbox" value="${d.v}" id="${d.id}-${idx}">
+            <label class="form-check-label" for="${d.id}-${idx}">${d.label}</label>
+          </div>`).join('')}
+        </div>
+        <div class="mt-2">
+          <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input semana-100" id="semana100-${idx}">
+            <label class="custom-control-label" for="semana100-${idx}">Sem faltas (100%)</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // remover linha
+  wrap.querySelector(".remover-btn").addEventListener("click", () => wrap.remove());
+
+  // lógica “Sem faltas (100%)”
+  const chk100 = wrap.querySelector(".semana-100");
+  const dias = wrap.querySelectorAll(".dia-falta");
+  chk100.addEventListener("change", () => {
+    if (chk100.checked) {
+      dias.forEach(d => { d.checked = false; d.disabled = true; });
+    } else {
+      dias.forEach(d => { d.disabled = false; });
+    }
+  });
+
+  listaAlunosDiv.appendChild(wrap);
+}
+
+// pelo menos uma linha no início
+addLinhaAluno();
+
+// Marcar 100% para todos os cartões atuais (apenas UI)
+function marcar100ParaTodos() {
+  document.querySelectorAll(".aluno-card").forEach(card => {
+    const chk = card.querySelector(".semana-100");
+    const dias = card.querySelectorAll(".dia-falta");
+    chk.checked = true;
+    dias.forEach(d => { d.checked = false; d.disabled = true; });
+  });
+}
+
+// REGISTRAR 100% (todos): envia presencas=5, aulas=5 para todas as linhas
+async function registrar100Todos() {
+  const cards = document.querySelectorAll(".aluno-card");
+  if (!cards.length) return;
+
+  let mensagens = [];
+  for (const card of cards) {
+    const aluno = card.querySelector(".aluno-nome").value.trim();
+    const serie = card.querySelector(".aluno-serie").value.trim();
+    if (!aluno || !serie) continue;
+
+    const dados = { aluno, serie, presencas: 5, aulas: 5, dias_falta: [] };
+
+    try {
+      const res = await fetch("/api/frequencia", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(dados)
+      });
+      const json = await res.json();
+      mensagens.push(`✅ ${aluno} (${serie}) – ${json.frequencia}% (faltas: 0/5)`);
+    } catch (err) {
+      mensagens.push(`❌ ${aluno} (${serie}) – erro ao enviar`);
+    }
+  }
+
+  document.getElementById("resposta").innerHTML =
+    `<div class="alert alert-success"><div><strong>Envio 100% concluído</strong></div>${mensagens.map(m=>`<div>${m}</div>`).join('')}</div>`;
+
+  // limpar e recarregar
+  document.getElementById("listaAlunos").innerHTML = "";
+  addLinhaAluno();
+  carregarRegistros();
+}
+
+// SUBMIT normal (considera os dias marcados/100% por aluno)
 document.getElementById("formFreq").addEventListener("submit", async function(e){
   e.preventDefault();
-  const form = e.target;
-  const dados = {
-    aluno: form.aluno.value,
-    serie: form.serie.value,
-    presencas: form.presencas.value,
-    aulas: form.aulas.value
-  };
-  const res = await fetch("/api/frequencia", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify(dados)
-  });
-  const json = await res.json();
+
+  const cards = document.querySelectorAll(".aluno-card");
+  if (!cards.length) { addLinhaAluno(); return; }
+
+  let mensagens = [];
+  for (const card of cards) {
+    const aluno = card.querySelector(".aluno-nome").value.trim();
+    const serie = card.querySelector(".aluno-serie").value.trim();
+    const usar100 = card.querySelector(".semana-100")?.checked;
+    const diasMarcados = usar100 ? [] : Array.from(card.querySelectorAll(".dia-falta:checked")).map(i => i.value);
+    if (!aluno || !serie) continue;
+
+    const faltas = usar100 ? 0 : diasMarcados.length;
+    const aulas = 5;
+    const presencas = aulas - faltas;
+    const dados = { aluno, serie, presencas, aulas, dias_falta: diasMarcados };
+
+    try {
+      const res = await fetch("/api/frequencia", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(dados)
+      });
+      const json = await res.json();
+      const msg = json.frequencia < 80
+        ? `⚠️ ${aluno} (${serie}) – ${json.frequencia}% (faltas: ${faltas}/5)`
+        : `✅ ${aluno} (${serie}) – ${json.frequencia}% (faltas: ${faltas}/5)`;
+      mensagens.push(msg);
+    } catch (err) {
+      mensagens.push(`❌ ${aluno} (${serie}) – erro ao enviar`);
+    }
+  }
+
   document.getElementById("resposta").innerHTML =
-    json.frequencia < 80 
-      ? `<div class="alert alert-danger">⚠️ Frequência baixa: ${json.frequencia}% - Buscativa acionada</div>` 
-      : `<div class="alert alert-success">✅ Frequência registrada: ${json.frequencia}%</div>`;
-  form.reset();
+    `<div class="alert alert-info"><div><strong>Envio concluído</strong></div>${mensagens.map(m=>`<div>${m}</div>`).join('')}</div>`;
+
+  listaAlunosDiv.innerHTML = "";
+  addLinhaAluno();
   carregarRegistros();
 });
+
+// LISTAGEM — individual e acumulado (cálculo robusto pelo front)
 async function carregarRegistros() {
   const res = await fetch("/api/frequencia-listar");
   const lista = await res.json();
   const tbody = document.getElementById("tabelaRegistros");
+  const acumulado = document.getElementById("switchAcumulado").checked;
+
   tbody.innerHTML = "";
-  lista.forEach(item => {
-    const linha = document.createElement("tr");
-    linha.innerHTML = `
-      <td><input type="checkbox" class="check-linha"></td>
-      <td>${item.aluno}</td>
-      <td>${item.serie}</td>
-      <td>${item.presencas}</td>
-      <td>${item.aulas}</td>
-      <td>${item.frequencia}%</td>
-      <td>${new Date(item.dataRegistro).toLocaleString('pt-BR')}</td>`;
-    tbody.appendChild(linha);
-  });
+
+  if (!acumulado) {
+    // registros individuais
+    lista.forEach(item => {
+      const aulas = Number(item.aulas) || 5;
+      const presBackend = Number(item.presencas) || 0;
+      const faltas = Math.max(0, aulas - presBackend);
+      const presCalc = aulas - faltas;
+      const freq = aulas > 0 ? Math.round((presCalc / aulas) * 100) : 0;
+
+      const tr = document.createElement("tr");
+      if (freq < 80) tr.classList.add("table-danger");
+      tr.innerHTML = `
+        <td><input type="checkbox" class="check-linha"></td>
+        <td>${item.aluno}</td>
+        <td>${item.serie}</td>
+        <td><strong>${faltas}</strong>/5</td>
+        <td>${presCalc}</td>
+        <td>${freq}%</td>
+        <td>${new Date(item.dataRegistro).toLocaleString('pt-BR')}</td>`;
+      tbody.appendChild(tr);
+    });
+    return;
+  }
+
+  // agrupado por aluno+série
+  const mapa = new Map();
+  for (const item of lista) {
+    const key = `${(item.aluno||'').toLowerCase()}|${(item.serie||'').toLowerCase()}`;
+    const aulas = Number(item.aulas) || 5;
+    const presBackend = Number(item.presencas) || 0;
+    const faltas = Math.max(0, aulas - presBackend);
+
+    const atual = mapa.get(key) || {
+      aluno: item.aluno, serie: item.serie,
+      totalAulas: 0, totalFaltas: 0, lastDate: null
+    };
+    atual.totalAulas += aulas;
+    atual.totalFaltas += faltas;
+
+    const dt = item.dataRegistro ? new Date(item.dataRegistro) : null;
+    if (dt && (!atual.lastDate || dt > atual.lastDate)) atual.lastDate = dt;
+
+    mapa.set(key, atual);
+  }
+
+  Array.from(mapa.values())
+    .map(x => {
+      const pres = x.totalAulas - x.totalFaltas;
+      const freq = x.totalAulas > 0 ? Math.round((pres / x.totalAulas) * 100) : 0;
+      return { ...x, pres, freq };
+    })
+    .sort((a,b) => a.freq - b.freq)
+    .forEach(item => {
+      const tr = document.createElement("tr");
+      if (item.freq < 80) tr.classList.add("table-danger");
+      tr.innerHTML = `
+        <td><input type="checkbox" class="check-linha"></td>
+        <td>${item.aluno}</td>
+        <td>${item.serie}</td>
+        <td><strong>${item.totalFaltas}</strong> (total)</td>
+        <td>${item.pres}</td>
+        <td>${item.freq}%</td>
+        <td>${item.lastDate ? item.lastDate.toLocaleString('pt-BR') : '-'}</td>`;
+      tbody.appendChild(tr);
+    });
 }
+
 function selecionarTodos(checkbox) {
   document.querySelectorAll(".check-linha").forEach(cb => cb.checked = checkbox.checked);
 }
@@ -83,4 +310,5 @@ function removerDaTela() {
 }
 window.onload = carregarRegistros;
 </script>
-</body></html>
+</body>
+</html>
