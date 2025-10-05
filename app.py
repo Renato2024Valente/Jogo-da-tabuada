@@ -1,243 +1,110 @@
-from flask import Flask, request, jsonify, render_template
-from flask_cors import CORS
-from pymongo import MongoClient
-from bson.objectid import ObjectId
-from datetime import datetime, date
+
 import os
+from datetime import datetime
+from uuid import uuid4
 
-# ---------------------- App & Mongo ----------------------
-app = Flask(__name__, static_folder="static", template_folder="templates")
-CORS(app)
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, flash
 
-# Usa a variável de ambiente MONGO_URI se existir; senão, usa sua URI do Atlas
-MONGO_URI = os.environ.get(
-    "MONGO_URI",
-    "mongodb+srv://bicudo:bicudo25@cluster0.b9gbf2n.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-)
-client = MongoClient(MONGO_URI)
-db = client["buscativa_escolar"]  # database que o app utiliza
-colecao_frequencia = db["frequencia"]
-colecao_buscativa = db["registro"]
+from sqlalchemy import create_engine, Integer, String, DateTime
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 
-# índices úteis
-try:
-    colecao_buscativa.create_index([("dataRegistro", -1)])
-    colecao_buscativa.create_index([("dedupeKey", 1), ("responsavel", 1)])
-    colecao_frequencia.create_index([("dataRegistro", -1)])
-except Exception:
+DATA_DIR = os.environ.get("DATA_DIR", os.path.dirname(__file__))
+UPLOAD_DIR = os.path.join(DATA_DIR, "uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+DATABASE_URL = os.environ.get("DATABASE_URL") or f"sqlite:///{os.path.join(DATA_DIR,'photos.db')}"
+
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+
+class Base(DeclarativeBase):
     pass
 
-# ---------------------- Helpers ----------------------
-def round_pct(p):
-    try:
-        return int(round(p))
-    except Exception:
-        return 0
+class Photo(Base):
+    __tablename__ = "photos"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    title: Mapped[str] = mapped_column(String(200), nullable=True)
+    description: Mapped[str] = mapped_column(String(1000), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
 
-def iso_week_key(d: date) -> str:
-    y, wk, _ = d.isocalendar()
-    return f"{y}-W{wk:02d}"
+Base.metadata.create_all(engine)
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
-def s(v):
-    return (v or "").strip()
+ADMIN_PIN = os.environ.get("ADMIN_PIN", "1234")
 
-def to_str_id(doc):
-    d = dict(doc)
-    d["_id"] = str(d["_id"])
-    return d
+app = Flask(__name__, static_folder="static", template_folder="templates")
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret")
 
-# ---------------------- Views ----------------------
-@app.route("/")
-def index():
+@app.get("/")
+def home():
     return render_template("index.html")
 
-@app.route("/frequencia")
-def frequencia_page():
-    return render_template("frequencia.html")
+@app.get("/galeria")
+def galeria():
+    with SessionLocal() as db:
+        photos = db.query(Photo).order_by(Photo.id.desc()).all()
+    return render_template("galeria.html", photos=photos)
 
-@app.route("/buscativa")
-def buscativa_page():
-    return render_template("buscativa.html")
+@app.post("/upload")
+def upload():
+    file = request.files.get("file")
+    title = (request.form.get("title") or "").strip()
+    description = (request.form.get("description") or "").strip()
+    if not file or file.filename == "":
+        flash("Selecione uma imagem.", "danger")
+        return redirect(url_for("galeria"))
 
-# ---------------------- API Frequência ----------------------
-@app.route("/api/frequencia", methods=["POST"])
-def registrar_frequencia():
-    dados = request.get_json(force=True)
+    allowed = {"png","jpg","jpeg","gif","webp"}
+    ext = file.filename.rsplit(".",1)[-1].lower() if "." in file.filename else ""
+    if ext not in allowed:
+        flash("Formato não suportado. Envie PNG/JPG/GIF/WEBP.", "danger")
+        return redirect(url_for("galeria"))
 
-    aluno = s(dados.get("aluno"))
-    serie = s(dados.get("serie"))
-    presencas = int(dados.get("presencas", 0) or 0)
-    aulas = int(dados.get("aulas", 0) or 0)
-    dias_falta = dados.get("dias_falta") or []  # opcional: ["Terça","Quinta"]
+    fname = f"{uuid4().hex}.{ext}"
+    file.save(os.path.join(UPLOAD_DIR, fname))
 
-    if not aluno or not serie or aulas <= 0 or presencas < 0 or presencas > aulas:
-        return jsonify({"status": "error", "message": "Dados inválidos"}), 400
+    with SessionLocal() as db:
+        p = Photo(filename=fname, title=title, description=description, created_at=datetime.utcnow())
+        db.add(p)
+        db.commit()
+    flash("Foto enviada com sucesso!", "success")
+    return redirect(url_for("galeria"))
 
-    freq = round_pct((presencas / aulas) * 100)
+@app.post("/delete/<int:photo_id>")
+def delete(photo_id: int):
+    pin = request.form.get("pin","")
+    if pin != ADMIN_PIN:
+        flash("PIN incorreto.", "danger")
+        return redirect(url_for("galeria"))
 
-    doc = {
-        "aluno": aluno,
-        "serie": serie,
-        "presencas": presencas,
-        "aulas": aulas,
-        "frequencia": freq,
-        "dias_falta": dias_falta,
-        "dataRegistro": datetime.now()
-    }
-    colecao_frequencia.insert_one(doc)
+    with SessionLocal() as db:
+        p = db.get(Photo, photo_id)
+        if not p:
+            flash("Foto não encontrada.", "danger")
+            return redirect(url_for("galeria"))
+        path = os.path.join(UPLOAD_DIR, p.filename)
+        try:
+            if os.path.exists(path):
+                os.remove(path)
+        except Exception:
+            pass
+        db.delete(p)
+        db.commit()
+    flash("Foto excluída!", "success")
+    return redirect(url_for("galeria"))
 
-    # Criar Buscativa automática (<80%), com dedupe por semana ISO
-    if freq < 80:
-        hoje = date.today()
-        faltas = max(0, aulas - presencas)
-        resultado_txt = f"Frequência abaixo: {freq}% (faltas: {faltas}/{aulas})"
-        if dias_falta:
-            resultado_txt += f" — Dias: {', '.join(dias_falta)}"
+@app.get("/uploads/<path:filename>")
+def uploads(filename):
+    return send_from_directory(UPLOAD_DIR, filename, as_attachment=False)
 
-        dedupe_key = f"{aluno.lower()}|{serie.lower()}|{iso_week_key(hoje)}"
-        ja_existe = colecao_buscativa.find_one({
-            "dedupeKey": dedupe_key,
-            "responsavel": "Sistema Frequência"
-        })
+@app.get("/evidencias")
+def evidencias():
+    padlet_url = "https://padlet.onrender.com/"
+    return render_template("evidencias.html", padlet_url=padlet_url)
 
-        if not ja_existe:
-            alerta = {
-                "aluno": aluno,
-                "serie": serie,
-                "dataFalta": hoje.isoformat(),      # YYYY-MM-DD
-                "tipoContato": "Automático",
-                "responsavel": "Sistema Frequência",
-                "resultado": resultado_txt,
-                "observacoes": f"Dias faltados: {', '.join(dias_falta)}" if dias_falta else "",
-                # campos ricos para a Buscativa exibir bonito
-                "freqNum": freq,
-                "faltasNum": faltas,
-                "aulasNum": aulas,
-                "diasFalta": dias_falta,
-                "dedupeKey": dedupe_key,
-                "dataRegistro": datetime.now()
-            }
-            colecao_buscativa.insert_one(alerta)
+@app.get("/contato")
+def contato():
+    return render_template("contato.html")
 
-    return jsonify({"status": "success", "frequencia": freq})
-
-@app.route("/api/frequencia-listar", methods=["GET"])
-def listar_frequencias():
-    registros = list(colecao_frequencia.find().sort("dataRegistro", -1))
-    saida = []
-    for r in registros:
-        r = to_str_id(r)
-        if isinstance(r.get("dataRegistro"), datetime):
-            r["dataRegistro"] = r["dataRegistro"].isoformat()
-        saida.append(r)
-    return jsonify(salida if (salida := saida) else [])
-
-# ---------------------- API Buscativa ----------------------
-@app.route("/api/buscativa", methods=["GET", "POST"])
-def buscativa():
-    if request.method == "POST":
-        dados = request.get_json(force=True)
-
-        aluno = s(dados.get("aluno"))
-        serie = s(dados.get("serie"))
-        dataFalta = s(dados.get("dataFalta")) or date.today().isoformat()
-        tipoContato = s(dados.get("tipoContato") or "Registro")
-        responsavel = s(dados.get("responsavel") or "Usuário")
-        resultado = s(dados.get("resultado") or "Frequência abaixo de 80%")
-        observacoes = s(dados.get("observacoes") or "")
-
-        # extras opcionais
-        freqNum = dados.get("freqNum")
-        faltasNum = dados.get("faltasNum")
-        aulasNum = dados.get("aulasNum")
-        diasFalta = dados.get("diasFalta") or []
-
-        # dedupe se for automático do sistema
-        dedupeKey = None
-        if responsavel == "Sistema Frequência":
-            try:
-                dt = date.fromisoformat(dataFalta)
-            except Exception:
-                dt = date.today()
-            dedupeKey = f"{aluno.lower()}|{serie.lower()}|{iso_week_key(dt)}"
-            ja_existe = colecao_buscativa.find_one({
-                "dedupeKey": dedupeKey,
-                "responsavel": "Sistema Frequência"
-            })
-            if ja_existe:
-                return jsonify({"status": "ok", "message": "Já havia buscativa automática nesta semana"}), 200
-
-        doc = {
-            "aluno": aluno,
-            "serie": serie,
-            "dataFalta": dataFalta,
-            "tipoContato": tipoContato,
-            "responsavel": responsavel,
-            "resultado": resultado,
-            "observacoes": observacoes,
-            "freqNum": freqNum,
-            "faltasNum": faltasNum,
-            "aulasNum": aulasNum,
-            "diasFalta": diasFalta,
-            "dedupeKey": dedupeKey,
-            "dataRegistro": datetime.now()
-        }
-        colecao_buscativa.insert_one(doc)
-        return jsonify({"status": "success"})
-
-    # GET
-    registros = list(colecao_buscativa.find().sort("dataRegistro", -1))
-    saida = []
-    for r in registros:
-        r = to_str_id(r)
-        if isinstance(r.get("dataRegistro"), datetime):
-            r["dataRegistro"] = r["dataRegistro"].isoformat()
-        saida.append(r)
-    return jsonify(saida)
-
-@app.route("/api/buscativa/<_id>", methods=["PUT"])
-def atualizar_buscativa(_id):
-    dados = request.get_json(force=True)
-    try:
-        res = colecao_buscativa.update_one(
-            {"_id": ObjectId(_id)},
-            {"$set": dados}
-        )
-        if res.matched_count == 0:
-            return jsonify({"status":"error","message":"Não encontrado"}), 404
-        doc = colecao_buscativa.find_one({"_id": ObjectId(_id)})
-        return jsonify({"status":"success", **to_str_id(doc)})
-    except Exception as e:
-        return jsonify({"status":"error","message":str(e)}), 400
-
-@app.route("/api/buscativa/<_id>", methods=["DELETE"])
-def deletar_buscativa(_id):
-    try:
-        res = colecao_buscativa.delete_one({"_id": ObjectId(_id)})
-        if res.deleted_count == 0:
-            return jsonify({"status":"error","message":"Não encontrado"}), 404
-        return jsonify({"status":"success","deleted":_id})
-    except Exception as e:
-        return jsonify({"status":"error","message":str(e)}), 400
-
-@app.route("/api/limpar-alertas", methods=["DELETE"])
-def limpar_alertas():
-    resultado = colecao_buscativa.delete_many({
-        "responsavel": "Sistema Frequência",
-        "resultado": {"$regex": "Frequência abaixo", "$options": "i"}
-    })
-    return jsonify({"status": "ok", "removidos": resultado.deleted_count, "message": "Alertas removidos com sucesso."})
-
-# ---------------------- Teste Mongo ----------------------
-@app.route("/teste-mongo")
-def teste_mongo():
-    try:
-        client.admin.command("ping")
-        return jsonify({"status": "ok", "mensagem": "Conectado com sucesso ao MongoDB Atlas"})
-    except Exception as e:
-        return jsonify({"status": "erro", "mensagem": str(e)})
-
-# ---------------------- Run ----------------------
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)

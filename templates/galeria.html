@@ -1,0 +1,67 @@
+
+{% extends "layout.html" %}
+{% block content %}
+<h2 class="mb-3">Galeria</h2>
+<div class="card mb-4 border-0 shadow-sm">
+  <div class="card-body">
+    <form class="row g-2" action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+      <div class="col-12 col-md-4">
+        <input class="form-control" type="file" name="file" accept="image/*" required>
+      </div>
+      <div class="col-12 col-md-3">
+        <input class="form-control" type="text" name="title" placeholder="Título" required>
+      </div>
+      <div class="col-12 col-md-5">
+        <input class="form-control" type="text" name="description" placeholder="Descrição (opcional)">
+      </div>
+      <div class="col-12 text-end">
+        <button class="btn btn-primary" type="submit">Enviar</button>
+      </div>
+    </form>
+    <div class="form-text mt-2">Formatos: PNG, JPG, GIF, WEBP. Recomendado até ~5MB.</div>
+  </div>
+</div>
+
+<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3">
+  {% for p in photos %}
+  <div class="col">
+    <div class="card h-100 shadow-sm">
+      <img class="bd-placeholder-img card-img-top" role="img"
+           src="{{ url_for('uploads', filename=p.filename) }}"
+           alt="{{ p.title }}"
+           style="object-fit:cover; aspect-ratio:1/1; cursor:pointer"
+           onclick="openModal('{{ url_for('uploads', filename=p.filename) }}','{{ p.title|e }}','{{ p.description|e }}')">
+      <div class="card-body d-flex flex-column">
+        <h5 class="card-title">{{ p.title }}</h5>
+        {% if p.description %}<p class="card-text text-secondary">{{ p.description }}</p>{% endif %}
+        <form action="{{ url_for('delete', photo_id=p.id) }}" method="post" class="mt-auto">
+          <div class="input-group">
+            <input type="password" name="pin" class="form-control" placeholder="PIN admin">
+            <button class="btn btn-outline-danger" type="submit">Excluir</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="col"><div class="alert alert-info">Ainda não há fotos. Envie a primeira! 🎉</div></div>
+  {% endfor %}
+</div>
+
+<div class="modal fade" id="imgModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content bg-black">
+      <div class="modal-header border-0">
+        <h5 class="modal-title" id="modalTitle"></h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <img id="modalImg" class="w-100" style="max-height:80vh; object-fit:contain" src="" alt="">
+      </div>
+      <div class="modal-footer border-0">
+        <p id="modalDesc" class="text-secondary m-0"></p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
